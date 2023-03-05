@@ -4,6 +4,7 @@
 
 """Data model for the birdr database."""
 import csv
+import datetime
 import pathlib
 import typing as T
 
@@ -27,6 +28,7 @@ class Species(Base):
     )
 
     category = relationship("Category", back_populates="species")
+    sightings = relationship("Sighting", back_populates="species")
 
 
 class Category(Base):
@@ -38,6 +40,28 @@ class Category(Base):
     name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
 
     species = relationship("Species", back_populates="category")
+
+
+class Sighting(Base):
+    """Table holding all bird sightings."""
+
+    __tablename__ = "sightings"
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    year = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    month = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    day = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    location = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    species_id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("species.id")
+    )
+    notes = sqlalchemy.Column(sqlalchemy.String)
+
+    species = relationship("Species", back_populates="sightings")
+
+
+class UnrecognizedSpecies(Exception):
+    """An unrecognized species was found."""
 
 
 class Model:
@@ -80,4 +104,27 @@ class Model:
 
                 sess.add(species)
 
+            sess.commit()
+
+    def add_sighting(
+        self, date: datetime.date, species: str, location: str, notes: str
+    ) -> None:
+        """Add a new bird sighting in the database."""
+        with session.Session(self.engine) as sess:
+            query = sqlalchemy.select(Species).filter(
+                Species.name.like(f"{species}")
+            )
+            species_obj = sess.execute(query).scalars().one_or_none()
+            if species_obj is None:
+                raise UnrecognizedSpecies(species)
+
+            sighting = Sighting(
+                year=date.year,
+                month=date.month,
+                day=date.day,
+                location=location,
+                species=species_obj,
+                notes=notes,
+            )
+            sess.add(sighting)
             sess.commit()

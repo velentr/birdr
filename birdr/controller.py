@@ -4,6 +4,7 @@
 
 """Policy for interacting with the user's system."""
 
+import datetime
 import os
 import pathlib
 
@@ -30,3 +31,11 @@ def init(*, ebird_list: pathlib.Path = None) -> None:
     if ebird_list is not None:
         with ebird_list.open("r") as filp:
             eng.load_ebird_list(filp)
+
+
+def add(
+    *, date: datetime.date, location: str, species: str, notes: str
+) -> None:
+    """Add a new sighting to the database."""
+    eng = Model(get_database_path())
+    eng.add_sighting(date, species, location, notes)
