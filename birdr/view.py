@@ -4,7 +4,9 @@
 
 """User interface for viewing/manipulating the birdr database."""
 
+import datetime
 import pathlib
+import sys
 
 import click
 
@@ -26,3 +28,40 @@ def init(ebird_list: str = None) -> None:
     """
     ebird_path = pathlib.Path(ebird_list) if ebird_list else None
     controller.init(ebird_list=ebird_path)
+
+
+@main.command()
+@click.option(
+    "--non-interactive",
+    "-n",
+    is_flag=True,
+    help="Parse sighting data from stdin instead of prompting.",
+)
+def add(non_interactive: bool = False) -> None:
+    """Add a new series of sightings to the database.
+
+    Sightings may be added either interactively or non-interactively. When
+    adding interactively, a series of sightings are added for a single date and
+    location. Species names are prompted; notes are read using $EDITOR.
+
+    When adding non-interactively, sighting data is read through stdin. Each
+    line is a single entry containing the date (in YYYY/MM/DD format),
+    location, species name, and notes (all separated by nil characters).
+    """
+    if non_interactive:
+        _add_non_interactive()
+    else:
+        _add_interactive()
+
+
+def _add_non_interactive() -> None:
+    for line in sys.stdin:
+        [date_str, location, species, notes] = line.strip().split("\0")
+        date = datetime.datetime.strptime(date_str, "%Y/%m/%d").date()
+        controller.add(
+            date=date, location=location, species=species, notes=notes
+        )
+
+
+def _add_interactive() -> None:
+    raise NotImplementedError()
