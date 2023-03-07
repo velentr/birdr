@@ -4,6 +4,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-only
 
+if [ -f venv/bin/activate ]; then
+	. venv/bin/activate
+fi
+
 export PATH="${PATH}:./scripts"
 export PYTHONPATH=.
 export PYTHONDONTWRITEBYTECODE=1
