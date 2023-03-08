@@ -29,6 +29,9 @@ class Species(Base):
 
     category = relationship("Category", back_populates="species")
     sightings = relationship("Sighting", back_populates="species")
+    checklists = relationship(
+        "Checklist", secondary="species_checklist", back_populates="species"
+    )
 
 
 class Category(Base):
@@ -58,6 +61,37 @@ class Sighting(Base):
     notes = sqlalchemy.Column(sqlalchemy.String)
 
     species = relationship("Species", back_populates="sightings")
+
+
+class Checklist(Base):
+    """Table holding checklist information."""
+
+    __tablename__ = "checklist"
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+
+    species = relationship(
+        "Species", secondary="species_checklist", back_populates="checklists"
+    )
+
+
+class SpeciesChecklist(Base):
+    """Table bridging checklists with species.
+
+    Generally, this should not be used directly. The Species and Checklist
+    tables should back populate each other through this bridge.
+    """
+
+    __tablename__ = "species_checklist"
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    species_id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("species.id")
+    )
+    checklist_id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("checklist.id")
+    )
 
 
 class UnrecognizedSpecies(Exception):
