@@ -19,7 +19,7 @@ def main() -> None:
 
 
 @main.command()
-@click.argument("ebird_list", required=False)
+@click.argument("ebird_list", required=False, type=click.Path(exists=True))
 def init(ebird_list: str = None) -> None:
     """Initialize the bird database.
 
