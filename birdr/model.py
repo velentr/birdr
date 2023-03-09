@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 """Data model for the birdr database."""
+import contextlib
 import csv
 import datetime
+import dataclasses
 import pathlib
 import typing as T
 
@@ -98,6 +100,57 @@ class UnrecognizedSpecies(Exception):
     """An unrecognized species was found."""
 
 
+@dataclasses.dataclass(frozen=True)
+class Transaction:
+    """Interface to a database that lets you manipulate the tables."""
+
+    session: session.Session
+
+    def load_ebird_list(self, ebird_list: T.TextIO) -> None:
+        """Load the ebird species list."""
+        categories: T.Dict[str, Category] = {}
+        csv_input = csv.reader(ebird_list)
+
+        # Note that the first line is the header; we are implicitly ignoring it
+        # with the 'species' check below.
+        for csv_line in csv_input:
+            if csv_line[1] != "species":
+                continue
+            name = csv_line[3]
+            category_name = csv_line[7]
+
+            if category_name in categories:
+                category = categories[category_name]
+            else:
+                category = Category(name=category_name)
+                categories[category_name] = category
+
+            species = Species(name=name, category=category)
+
+            self.session.add(species)
+
+    def add_sighting(
+        self, date: datetime.date, species: str, location: str, notes: str
+    ) -> None:
+        """Add a new bird sighting in the database."""
+        query = sqlalchemy.select(Species).filter(
+            Species.name.like(f"{species}")
+        )
+        species_obj = self.session.execute(query).scalars().one_or_none()
+        if species_obj is None:
+            raise UnrecognizedSpecies(species)
+
+        sighting = Sighting(
+            year=date.year,
+            month=date.month,
+            day=date.day,
+            location=location,
+            species=species_obj,
+            notes=notes,
+        )
+        self.session.add(sighting)
+
+
 class Model:
     """Main class for interfacing with the data model of birdr."""
 
@@ -114,51 +167,12 @@ class Model:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         Base.metadata.create_all(self.engine)
 
-    def load_ebird_list(self, ebird_list: T.TextIO) -> None:
-        """Load the ebird species list."""
-        categories: T.Dict[str, Category] = {}
-        csv_input = csv.reader(ebird_list)
+    @contextlib.contextmanager
+    def transaction(self) -> T.Iterable[Transaction]:
+        """Start a group of operations on a database.
 
+        If any operation fails, none of the operations will be committed.
+        """
         with session.Session(self.engine) as sess:
-            # Note that the first line is the header; we are implicitly
-            # ignoring it with the 'species' check below.
-            for csv_line in csv_input:
-                if csv_line[1] != "species":
-                    continue
-                name = csv_line[3]
-                category_name = csv_line[7]
-
-                if category_name in categories:
-                    category = categories[category_name]
-                else:
-                    category = Category(name=category_name)
-                    categories[category_name] = category
-
-                species = Species(name=name, category=category)
-
-                sess.add(species)
-
-            sess.commit()
-
-    def add_sighting(
-        self, date: datetime.date, species: str, location: str, notes: str
-    ) -> None:
-        """Add a new bird sighting in the database."""
-        with session.Session(self.engine) as sess:
-            query = sqlalchemy.select(Species).filter(
-                Species.name.like(f"{species}")
-            )
-            species_obj = sess.execute(query).scalars().one_or_none()
-            if species_obj is None:
-                raise UnrecognizedSpecies(species)
-
-            sighting = Sighting(
-                year=date.year,
-                month=date.month,
-                day=date.day,
-                location=location,
-                species=species_obj,
-                notes=notes,
-            )
-            sess.add(sighting)
+            yield Transaction(session=sess)
             sess.commit()
