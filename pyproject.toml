@@ -5,6 +5,9 @@
 [tool.black]
 line-length = 79
 
+[tool.mypy]
+disallow_untyped_defs = true
+
 [tool.pylint.MAIN]
 disable = [
     "R0903",  # too-few-public-methods
