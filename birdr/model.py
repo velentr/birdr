@@ -129,14 +129,23 @@ class Transaction:
 
             self.session.add(species)
 
+    def _lookup_species_by_name(self, species: str) -> sqlalchemy.orm.Query:
+        """Lookup SPECIES in the database, ordered alphabetically by name."""
+        return (
+            self.session.query(Species)
+            .filter(Species.name.like(species))
+            .order_by(Species.name)
+        )
+
+    def _lookup_one_species_by_name(self, species: str) -> T.Optional[Species]:
+        """Lookup a species by name."""
+        return self._lookup_species_by_name(species).one_or_none()
+
     def add_sighting(
         self, date: datetime.date, species: str, location: str, notes: str
     ) -> None:
         """Add a new bird sighting in the database."""
-        query = sqlalchemy.select(Species).filter(
-            Species.name.like(f"{species}")
-        )
-        species_obj = self.session.execute(query).scalars().one_or_none()
+        species_obj = self._lookup_one_species_by_name(species)
         if species_obj is None:
             raise UnrecognizedSpecies(species)
 
