@@ -7,6 +7,7 @@
 import datetime
 import pathlib
 import sys
+import typing as T
 
 import click
 
@@ -65,3 +66,29 @@ def _add_non_interactive() -> None:
 
 def _add_interactive() -> None:
     raise NotImplementedError()
+
+
+class InputIterator:
+    """Iterate over input using the given prompt."""
+
+    def __init__(self, prompt: str) -> None:
+        """Create a new input interator using the given prompt."""
+        self.prompt = prompt
+
+    def __iter__(self) -> T.Iterator[str]:
+        """Get the iterator object."""
+        return self
+
+    def __next__(self) -> str:
+        """Get the next prompted entry from the input."""
+        try:
+            return input(self.prompt).strip()
+        except EOFError as exc:
+            raise StopIteration from exc
+
+
+@main.command()
+@click.argument("name", required=True)
+def checklist(name: str) -> None:
+    """Add a new checklist to the database."""
+    controller.create_checklist(name=name, species=InputIterator("species? "))
