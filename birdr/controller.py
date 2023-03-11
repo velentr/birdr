@@ -7,6 +7,7 @@
 import datetime
 import os
 import pathlib
+import typing as T
 
 from birdr.model import Model
 
@@ -39,3 +40,11 @@ def add(
     """Add a new sighting to the database."""
     with Model(get_database_path()).transaction() as transaction:
         transaction.add_sighting(date, species, location, notes)
+
+
+def create_checklist(*, name: str, species: T.Iterable[str]) -> None:
+    """Create a new checklist in the database."""
+    with Model(get_database_path()).transaction() as transaction:
+        transaction.add_checklist(name)
+        for spec in species:
+            transaction.add_species_to_checklist(name, spec)
