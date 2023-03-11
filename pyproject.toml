@@ -4,3 +4,8 @@
 
 [tool.black]
 line-length = 79
+
+[tool.pylint.MAIN]
+disable = [
+    "R0903",  # too-few-public-methods
+]
