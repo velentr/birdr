@@ -141,6 +141,10 @@ class Transaction:
         """Lookup a species by name."""
         return self._lookup_species_by_name(species).one_or_none()
 
+    def lookup_matching_species(self, prefix: str) -> T.Iterable[Species]:
+        """Look up all the species that match the given PREFIX."""
+        return self._lookup_species_by_name(f"{prefix}%")
+
     def add_sighting(
         self, date: datetime.date, species: str, location: str, notes: str
     ) -> None:
