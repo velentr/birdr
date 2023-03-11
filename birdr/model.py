@@ -159,6 +159,35 @@ class Transaction:
         )
         self.session.add(sighting)
 
+    def add_checklist(self, name: str) -> None:
+        """Create a new checklist in the database."""
+        checklist = Checklist(name=name)
+        self.session.add(checklist)
+
+    def _lookup_checklist_by_name(self, checklist: str) -> Checklist:
+        """Lookup SPECIES in the database, ordered alphabetically by name."""
+        return (
+            self.session.query(Checklist)
+            .filter(Checklist.name == checklist)
+            .one_or_none()
+        )
+
+    def add_species_to_checklist(self, checklist: str, species: str) -> bool:
+        """Add an existing species to a checklist.
+
+        Return True if the species was added successfully; False is it was not.
+        """
+        checklist_obj = self._lookup_checklist_by_name(checklist)
+        if checklist_obj is None:
+            return False
+
+        species_obj = self._lookup_one_species_by_name(species)
+        if species_obj is None:
+            return False
+
+        species_obj.checklists.append(checklist_obj)
+        return True
+
 
 class Model:
     """Main class for interfacing with the data model of birdr."""
