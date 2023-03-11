@@ -7,9 +7,10 @@
 import datetime
 import os
 import pathlib
+import readline
 import typing as T
 
-from birdr.model import Model
+from birdr.model import Model, Species, Transaction
 
 
 def get_database_path() -> pathlib.Path:
@@ -42,9 +43,40 @@ def add(
         transaction.add_sighting(date, species, location, notes)
 
 
+class SpeciesCompleter:
+    """Readline tab completion engine for species."""
+
+    def __init__(self, transaction: Transaction) -> None:
+        """Initialize the engine using the given transaction."""
+        self.transaction = transaction
+        self.current: T.Optional[T.Iterator[Species]] = None
+
+    def readline_completer(self, text: str, state: int) -> T.Optional[str]:
+        """Complete the given text line by query the database."""
+        if state == 0:
+            self.current = iter(self.transaction.lookup_matching_species(text))
+        assert self.current is not None
+        species = next(self.current)
+        if species is None:
+            return None
+        return species.name
+
+    def __enter__(self) -> None:
+        """Activate this readline completion engine in a context."""
+        readline.parse_and_bind("tab: complete")
+        readline.set_completer_delims("")
+        readline.set_completer(self.readline_completer)
+
+    def __exit__(self, *_excinfo: T.Any) -> None:
+        """De-activate the completion engine on exit."""
+        readline.set_completer(None)
+
+
 def create_checklist(*, name: str, species: T.Iterable[str]) -> None:
     """Create a new checklist in the database."""
-    with Model(get_database_path()).transaction() as transaction:
+    with Model(
+        get_database_path()
+    ).transaction() as transaction, SpeciesCompleter(transaction):
         transaction.add_checklist(name)
         for spec in species:
             transaction.add_species_to_checklist(name, spec)
