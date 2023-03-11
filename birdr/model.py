@@ -168,7 +168,7 @@ class Model:
         Base.metadata.create_all(self.engine)
 
     @contextlib.contextmanager
-    def transaction(self) -> T.Iterable[Transaction]:
+    def transaction(self) -> T.Iterator[Transaction]:
         """Start a group of operations on a database.
 
         If any operation fails, none of the operations will be committed.
