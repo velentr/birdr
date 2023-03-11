@@ -71,7 +71,7 @@ class Checklist(Base):
     __tablename__ = "checklist"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    name = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
 
     species = relationship(
         "Species", secondary="species_checklist", back_populates="checklists"
