@@ -72,6 +72,17 @@ class SpeciesCompleter:
         readline.set_completer(None)
 
 
+def add_observations(
+    *, observations: T.Iterable[T.Tuple[datetime.date, str, str, str]]
+) -> None:
+    """Add a sequence of observations from the given iterator."""
+    with Model(
+        get_database_path()
+    ).transaction() as transaction, SpeciesCompleter(transaction):
+        for (date, location, species, notes) in observations:
+            transaction.add_sighting(date, species, location, notes)
+
+
 def create_checklist(*, name: str, species: T.Iterable[str]) -> None:
     """Create a new checklist in the database."""
     with Model(
