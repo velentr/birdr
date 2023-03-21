@@ -55,10 +55,14 @@ def add(non_interactive: bool = False) -> None:
         _add_interactive()
 
 
+def _parse_date(date_str: str) -> datetime.date:
+    return datetime.datetime.strptime(date_str, "%Y/%m/%d").date()
+
+
 def _add_non_interactive() -> None:
     for line in sys.stdin:
         [date_str, location, species, notes] = line.strip().split("\0")
-        date = datetime.datetime.strptime(date_str, "%Y/%m/%d").date()
+        date = _parse_date(date_str)
         controller.add(
             date=date, location=location, species=species, notes=notes
         )
