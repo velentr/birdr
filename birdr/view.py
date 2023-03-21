@@ -5,8 +5,13 @@
 """User interface for viewing/manipulating the birdr database."""
 
 import datetime
+import logging
+import os
 import pathlib
+import re
+import subprocess
 import sys
+import tempfile
 import typing as T
 
 import click
@@ -68,10 +73,6 @@ def _add_non_interactive() -> None:
         )
 
 
-def _add_interactive() -> None:
-    raise NotImplementedError()
-
-
 class InputIterator:
     """Iterate over input using the given prompt."""
 
@@ -89,6 +90,55 @@ class InputIterator:
             return input(self.prompt).strip()
         except EOFError as exc:
             raise StopIteration from exc
+
+
+class ObservationIterator:
+    """Iterate over input to generate observations."""
+
+    def __init__(self, date: datetime.date, location: str) -> None:
+        """Create a new iterator for generating observations."""
+        self.date = date
+        self.location = location
+        self.input_iter = iter(InputIterator("species? "))
+        self.editor = os.environ.get("EDITOR", "vi")
+        self.whitespace_sub = re.compile(r"\s+")
+
+    def __iter__(self) -> T.Iterator[T.Tuple[datetime.date, str, str, str]]:
+        """Get the iterator object."""
+        return self
+
+    def __next__(self) -> T.Tuple[datetime.date, str, str, str]:
+        """Get the next observation."""
+        species = next(self.input_iter)
+
+        with tempfile.NamedTemporaryFile(mode="r") as notes_file:
+            result = subprocess.call([self.editor, notes_file.name])
+            if result != 0:
+                logging.error(
+                    "%s exited unsuccessfully; aborting", self.editor
+                )
+                raise StopIteration
+
+            notes = re.sub(self.whitespace_sub, " ", notes_file.read()).strip()
+            if not notes:
+                raise StopIteration
+
+        return (self.date, self.location, species, notes)
+
+
+def _add_interactive() -> None:
+    date_str = input("date? ")
+    try:
+        date = _parse_date(date_str)
+    except ValueError:
+        logging.error("%s is not a valid date", date_str)
+        sys.exit(1)
+
+    location = input("location? ")
+
+    controller.add_observations(
+        observations=ObservationIterator(date, location)
+    )
 
 
 @main.command()
