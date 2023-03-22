@@ -4,6 +4,9 @@
 
 """Policy for interacting with the user's system."""
 
+from __future__ import annotations
+
+import dataclasses
 import datetime
 import os
 import pathlib
@@ -91,3 +94,68 @@ def create_checklist(*, name: str, species: T.Iterable[str]) -> None:
         transaction.add_checklist(name)
         for spec in species:
             transaction.add_species_to_checklist(name, spec)
+
+
+@dataclasses.dataclass(frozen=True)
+class CategoryData:
+    """High-level representation of a category of birds."""
+
+    seen: T.Set[str]
+    unseen: T.Set[str]
+    complete: float = 0.0
+
+    def add_seen(self, species: str) -> CategoryData:
+        """Return a new category data with an additional observed species."""
+        return CategoryData(
+            seen=self.seen | {species},
+            unseen=self.unseen,
+            complete=(len(self.seen) + 1)
+            / (len(self.seen) + len(self.unseen) + 1),
+        )
+
+    def add_unseen(self, species: str) -> CategoryData:
+        """Return a new category data with an additional unobserved species."""
+        return CategoryData(
+            seen=self.seen,
+            unseen=self.unseen | {species},
+            complete=len(self.seen) / (len(self.seen) + len(self.unseen) + 1),
+        )
+
+
+@dataclasses.dataclass(frozen=True)
+class ChecklistData:
+    """High-level representation of a set of species (grouped by category)."""
+
+    categories: T.Dict[str, CategoryData]
+    complete: float = 0.0
+
+
+def get_checklist_data(*, checklist: str) -> T.Optional[ChecklistData]:
+    """Get structured data for a given checklist."""
+    with Model(get_database_path()).transaction() as transaction:
+        num_seen = 0
+        num_total = 0
+        categories: T.Dict[str, CategoryData] = {}
+
+        checklist_data = transaction.lookup_checklist(checklist)
+        if checklist_data is None:
+            return None
+
+        for (species, category, seen) in checklist_data:
+            category_data = categories.get(category) or CategoryData(
+                set(), set()
+            )
+            new_category = (
+                category_data.add_seen(species)
+                if seen
+                else category_data.add_unseen(species)
+            )
+            categories[category] = new_category
+
+            num_total += 1
+            if seen:
+                num_seen += 1
+
+        return ChecklistData(
+            categories=categories, complete=num_seen / num_total
+        )
