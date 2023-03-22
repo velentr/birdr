@@ -106,6 +106,23 @@ class Transaction:
 
     session: session.Session
 
+    def lookup_checklist(
+        self, checklist_name: str
+    ) -> T.Optional[T.Iterator[T.Tuple[str, str, bool]]]:
+        """Iterate through all species in a checklist."""
+        checklist = self._lookup_checklist_by_name(checklist_name)
+        if checklist is None:
+            return None
+
+        return map(
+            lambda species: (
+                species.name,
+                species.category.name,
+                len(species.sightings) > 0,
+            ),
+            checklist.species,
+        )
+
     def load_ebird_list(self, ebird_list: T.TextIO) -> None:
         """Load the ebird species list."""
         categories: T.Dict[str, Category] = {}
