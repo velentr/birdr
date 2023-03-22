@@ -5,6 +5,9 @@
 # click for handling command-line parsing
 click == 8.*
 
+# rich for prettifying/formatting text in the terminal
+rich == 12.*
+
 # sqlalchemy for the ORM; pin to 1.4, which is the version available in
 # guix. This should be 2.* once guix updates the package.
 sqlalchemy == 1.4.*
