@@ -15,6 +15,8 @@ import tempfile
 import typing as T
 
 import click
+import rich
+import rich.tree
 
 from birdr import controller
 
@@ -146,3 +148,27 @@ def _add_interactive() -> None:
 def checklist(name: str) -> None:
     """Add a new checklist to the database."""
     controller.create_checklist(name=name, species=InputIterator("species? "))
+
+
+@main.command()
+@click.argument("checklist_name", required=True)
+def show(checklist_name: str) -> None:
+    """Show the status of a checklist."""
+    data = controller.get_checklist_data(checklist=checklist_name)
+
+    if data is None:
+        logging.error("%s is not a valid checklist", checklist_name)
+        sys.exit(1)
+
+    tree = rich.tree.Tree(f"{data.complete:4.0%} {checklist_name}")
+    for category, cat_data in sorted(data.categories.items()):
+        branch = tree.add(f"{cat_data.complete:4.0%} {category}")
+        for species in sorted(cat_data.seen | cat_data.unseen):
+            mark = (
+                "[green]:heavy_check_mark:[/green]"
+                if species in cat_data.seen
+                else "[black]:black_medium_square:[/black]"
+            )
+            branch.add(f"{mark} {species}")
+
+    rich.print(tree)
