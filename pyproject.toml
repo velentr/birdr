@@ -2,6 +2,26 @@
 #
 # SPDX-License-Identifier: GPL-3.0-only
 
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "birdr"
+version = "0.0.0"
+authors = [
+    { name = "Brian Kubisiak", email = "brian@kubisiak.com" },
+]
+description = "Record and track bird sightings and checklists"
+dependencies = [
+    "click == 8.*",
+    "rich == 12.*",
+    "sqlalchemy == 1.4.*",
+]
+
+[project.scripts]
+birdr = "birdr.view:main"
+
 [tool.black]
 line-length = 79
 
@@ -12,3 +32,6 @@ disallow_untyped_defs = true
 disable = [
     "R0903",  # too-few-public-methods
 ]
+
+[tool.setuptools]
+packages = ["birdr"]
