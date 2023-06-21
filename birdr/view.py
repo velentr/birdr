@@ -20,6 +20,8 @@ import rich.tree
 
 from birdr import controller
 
+VERSION = "0.0.0"
+
 
 @click.group()
 def main() -> None:
@@ -172,3 +174,9 @@ def show(checklist_name: str) -> None:
             branch.add(f"{mark} {species}")
 
     rich.print(tree)
+
+
+@main.command()
+def version() -> None:
+    """Check the version number of the application."""
+    print(f"birdr v{VERSION}")
