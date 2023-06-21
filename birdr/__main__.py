@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2023 Brian Kubisiak <brian@kubisiak.com>
 #
 # SPDX-License-Identifier: GPL-3.0-only
+from .version import __version__
 
 """Run the birdr CLI."""
 
