@@ -96,6 +96,13 @@ def create_checklist(*, name: str, species: T.Iterable[str]) -> None:
             transaction.add_species_to_checklist(name, spec)
 
 
+def get_checklists() -> T.Iterator[str]:
+    """Get the names of all checklists in the database."""
+    with Model(get_database_path()).transaction() as transaction:
+        for checklist in transaction.lookup_checklist_names():
+            yield checklist
+
+
 @dataclasses.dataclass(frozen=True)
 class CategoryData:
     """High-level representation of a category of birds."""

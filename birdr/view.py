@@ -144,10 +144,20 @@ def _add_interactive() -> None:
 
 
 @main.command()
-@click.argument("name", required=True)
-def checklist(name: str) -> None:
-    """Add a new checklist to the database."""
-    controller.create_checklist(name=name, species=InputIterator("species? "))
+@click.argument("name", required=False)
+def checklist(name: str = None) -> None:
+    """Look up or add a new checklist to the database.
+
+    If a NAME is provided, interactively add it as a new checklist to
+    the database. Otherwise, list all existing checklists.
+    """
+    if name is None:
+        for checklist_name in controller.get_checklists():
+            print(checklist_name)
+    else:
+        controller.create_checklist(
+            name=name, species=InputIterator("species? ")
+        )
 
 
 @main.command()

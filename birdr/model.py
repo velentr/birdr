@@ -123,6 +123,12 @@ class Transaction:
             checklist.species,
         )
 
+    def lookup_checklist_names(self) -> T.Iterator[str]:
+        """Iterate through all the checklists in the database."""
+        return map(
+            lambda checklist: checklist.name, self.session.query(Checklist)
+        )
+
     def load_ebird_list(self, ebird_list: T.TextIO) -> None:
         """Load the ebird species list."""
         categories: T.Dict[str, Category] = {}
