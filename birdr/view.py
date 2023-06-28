@@ -172,3 +172,10 @@ def show(checklist_name: str) -> None:
             branch.add(f"{mark} {species}")
 
     rich.print(tree)
+
+
+@main.command()
+@click.argument("version", required=False)
+def version(version: str) -> None:
+    """Check the version number of the application"""
+    print(controller.show_version())

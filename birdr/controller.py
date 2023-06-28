@@ -159,3 +159,5 @@ def get_checklist_data(*, checklist: str) -> T.Optional[ChecklistData]:
         return ChecklistData(
             categories=categories, complete=num_seen / num_total
         )
+def show_version() -> str:
+    return "birdr 1.1.1"
