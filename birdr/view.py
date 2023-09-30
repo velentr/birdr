@@ -160,6 +160,18 @@ def checklist(name: str = None) -> None:
         )
 
 
+def _color_by_percent(text: str, percent: float) -> str:
+    if percent <= 0.25:
+        color = "red"
+    elif percent <= 0.50:
+        color = "bright_red"
+    elif percent <= 0.75:
+        color = "yellow"
+    else:
+        color = "green"
+    return f"[{color}]{text}[/{color}]"
+
+
 @main.command()
 @click.argument("checklist_name", required=True)
 def show(checklist_name: str) -> None:
@@ -170,9 +182,14 @@ def show(checklist_name: str) -> None:
         logging.error("%s is not a valid checklist", checklist_name)
         sys.exit(1)
 
-    tree = rich.tree.Tree(f"{data.complete:4.0%} {checklist_name}")
+    symbol = ":arrow_forward:"
+    tree = rich.tree.Tree(
+        f"{_color_by_percent(symbol, data.complete)}{data.complete:4.0%} {checklist_name}"
+    )
     for category, cat_data in sorted(data.categories.items()):
-        branch = tree.add(f"{cat_data.complete:4.0%} {category}")
+        branch = tree.add(
+            f"{_color_by_percent(symbol, cat_data.complete)}{cat_data.complete:4.0%} {category}"
+        )
         for species in sorted(cat_data.seen | cat_data.unseen):
             mark = (
                 "[green]:heavy_check_mark:[/green]"
