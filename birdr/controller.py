@@ -28,7 +28,7 @@ def get_database_path() -> pathlib.Path:
     )
 
 
-def init(*, ebird_list: pathlib.Path = None) -> None:
+def init(*, ebird_list: T.Optional[pathlib.Path] = None) -> None:
     """Initialize the bird database."""
     eng = Model(get_database_path())
     eng.create()

@@ -28,7 +28,7 @@ def main() -> None:
 
 @main.command()
 @click.argument("ebird_list", required=False, type=click.Path(exists=True))
-def init(ebird_list: str = None) -> None:
+def init(ebird_list: T.Optional[str] = None) -> None:
     """Initialize the bird database.
 
     Optionally, use the given EBIRD_LIST (downloaded from ebird.org) to
@@ -145,7 +145,7 @@ def _add_interactive() -> None:
 
 @main.command()
 @click.argument("name", required=False)
-def checklist(name: str = None) -> None:
+def checklist(name: T.Optional[str] = None) -> None:
     """Look up or add a new checklist to the database.
 
     If a NAME is provided, interactively add it as a new checklist to
