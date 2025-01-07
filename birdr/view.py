@@ -20,7 +20,7 @@ import rich.tree
 
 from birdr import controller
 
-VERSION = "0.0.0"
+VERSION = "0.1.1"
 
 
 @click.group()
