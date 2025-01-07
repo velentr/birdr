@@ -15,7 +15,7 @@ authors = [
 description = "Record and track bird sightings and checklists"
 dependencies = [
     "click == 8.*",
-    "rich == 12.*",
+    "rich == 13.*",
     "sqlalchemy == 1.4.*",
 ]
 
